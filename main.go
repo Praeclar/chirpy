@@ -24,7 +24,3 @@ func main() {
 
 	server.ListenAndServe()
 }
-
-func fileServerPrefixed(prefix, dir string) http.Handler {
-	return http.StripPrefix(prefix, http.FileServer(http.Dir(dir)))
-}
