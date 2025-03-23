@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync/atomic"
@@ -49,7 +50,59 @@ func main() {
 
 	})
 
+	serveMux.HandleFunc("POST /api/validate_chirp", getValidateHandler)
+
 	server.ListenAndServe()
+}
+
+func getValidateHandler(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Body string `json:"body"`
+	}
+	type errorOutput struct {
+		Error string `json:"error"`
+	}
+	type validOutput struct {
+		Valid bool `json:"valid"`
+	}
+
+	errorAny := errorOutput{
+		Error: "Something went wrong",
+	}
+	errAny, _ := json.Marshal(errorAny)
+	errorTooLong := errorOutput{
+		Error: "Chirp is too long",
+	}
+	errLong, _ := json.Marshal(errorTooLong)
+
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write(errAny)
+		return
+	}
+
+	if len(params.Body) > 140 {
+		w.WriteHeader(400)
+		w.Write(errLong)
+	}
+
+	validVals := validOutput{
+		Valid: true,
+	}
+
+	dat, err := json.Marshal(validVals)
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write(errAny)
+		return
+	}
+
+	w.WriteHeader(200)
+	w.Write(dat)
 }
 
 func getHealthzHandler(writer http.ResponseWriter, req *http.Request) {
