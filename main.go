@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync/atomic"
 )
 
@@ -63,7 +64,8 @@ func getValidateHandler(w http.ResponseWriter, r *http.Request) {
 		Error string `json:"error"`
 	}
 	type validOutput struct {
-		Valid bool `json:"valid"`
+		// Valid bool `json:"valid"`
+		Cleaned_body string `json:"cleaned_body"`
 	}
 
 	errorAny := errorOutput{
@@ -88,10 +90,20 @@ func getValidateHandler(w http.ResponseWriter, r *http.Request) {
 	if len(params.Body) > 140 {
 		w.WriteHeader(400)
 		w.Write(errLong)
+		return
+	}
+
+	splitBody := strings.Split(params.Body, " ")
+
+	for i, part := range splitBody {
+		lwrdStr := strings.ToLower(part)
+		if lwrdStr == "kerfuffle" || lwrdStr == "sharbert" || lwrdStr == "fornax" {
+			splitBody[i] = "****"
+		}
 	}
 
 	validVals := validOutput{
-		Valid: true,
+		Cleaned_body: strings.Join(splitBody, " "),
 	}
 
 	dat, err := json.Marshal(validVals)
