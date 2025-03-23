@@ -30,18 +30,18 @@ func main() {
 
 	serveMux.Handle("/app/", cfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
 
-	serveMux.HandleFunc("/healthz", getHealthzHandler)
+	serveMux.HandleFunc("GET /api/healthz", getHealthzHandler)
 
-	serveMux.HandleFunc("/metrics", func(writer http.ResponseWriter, req *http.Request) {
-		writer.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	serveMux.HandleFunc("GET /admin/metrics", func(writer http.ResponseWriter, req *http.Request) {
+		writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 		writer.WriteHeader(200)
 
-		countString := fmt.Sprintf("Hits: %d", cfg.fileserverHits.Load())
+		countString := fmt.Sprintf("<html><body><h1>Welcome, Chirpy Admin</h1><p>Chirpy has been visited %d times!</p></body></html>", cfg.fileserverHits.Load())
 
 		writer.Write([]byte(countString))
 	})
 
-	serveMux.HandleFunc("/reset", func(w http.ResponseWriter, r *http.Request) {
+	serveMux.HandleFunc("POST /admin/reset", func(w http.ResponseWriter, r *http.Request) {
 		cfg.fileserverHits.Store(0)
 
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
